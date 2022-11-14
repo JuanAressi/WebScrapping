@@ -1,0 +1,28 @@
+version: '3'
+
+services:
+  web:
+    container_name: scrapper_web
+    build:
+      context: ./web/.
+    deploy:
+      resources:
+        limits:
+          memory: "4g"
+    volumes:
+      - ./back/:/var/www/html
+      - ./web/apache/virtualhost.conf:/etc/apache2/sites-enabled/000-default.conf
+      - ./web/php/php.ini:/usr/local/etc/php/php.ini
+    ports:
+      - "80:80"
+    networks:
+      my_net:
+        ipv4_address: "172.28.1.2"
+  
+networks:
+  my_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+          - subnet: "172.28.0.0/16"

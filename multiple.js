@@ -6,65 +6,43 @@ const shops = [
 		item: 'Ropa de hombre, talle L, pagina 1',
 		url: 'https://ar.puma.com/deportes.html?customFilters=gender:4397;size:21&page=1',
 		checkPrice: async ( { page } ) => {
-			// await page.waitForFunction(() => {
-			// 	const items = document.querySelector( '.ProductPrice-CurrentPrice data' );
+			const items      = await page.$$( '.ProductCard' );
+			const itemsURL   = await page.$$( '.ProductCard .ProductCard-Link' );
+			const itemsName  = await page.$$( '.ProductCard .ProductCard-Name' );
+			const itemsPrice = await page.$$( '.ProductCard .ProductPrice-CurrentPrice data' );
+			const count      = await items.length;
 
-			// 	console.log( items );
-			// 	// return repoCards.length > 30;
-			// });
-			const item = await page.locator( '.ProductPrice-CurrentPrice data' );
-			console.log( item );
+			console.log( 'count: ' + count );
 
+			let i = 0;
 
-			// const priceShown = await page.textContent( 'bo' );
+			for ( i; i < count; i++ ) {
+				const itemURL   = await itemsURL[i].getAttribute( 'href' );
+				const itemName  = await itemsName[i].innerText();
+				const itemPrice = await itemsPrice[i].innerText();
 
-			// console.log( priceShown );
-			// const defaultPrice = 9999;
+				console.log( 'The item: ' + itemName + ' has a price of: ' + itemPrice + ' and the URL is: https://ar.puma.com/' + itemURL );
 
-			// let priceRange = '';
-
-			// if ( priceShown < defaultPrice * 0.1 ) {
-			// 	priceRange = '90% off';
-			// } else if ( priceShown < defaultPrice * 0.2 ) {
-			// 	priceRange = '80% off';
-			// } else if ( priceShown < defaultPrice * 0.3 ) {
-			// 	priceRange = '70% off';
-			// } else if ( priceShown < defaultPrice * 0.4 ) {
-			// 	priceRange = '60% off';
-			// } else if ( priceShown < defaultPrice * 0.5 ) {
-			// 	priceRange = '50% off';
-			// } else if ( priceShown < defaultPrice * 0.6 ) {
-			// 	priceRange = '40% off';
-			// } else if ( priceShown < defaultPrice * 0.7 ) {
-			// 	priceRange = '30% off';
-			// } else if ( priceShown < defaultPrice * 0.8 ) {
-			// 	priceRange = '20% off';
-			// } else if ( priceShown < defaultPrice * 0.9 ) {
-			// 	priceRange = '10% off';
-			// }
-
-			// return priceRange;
-			// console.log( priceShown );
+				// if ( priceRange !== '' ) {
+				// 	console.log( `${ name } has ${ item } on sale for ${ priceRange }` );
+				// 	console.log( `Check it out here: ${ url }` );
+				// }
+			}
 		}
 	},
 ];
 
 ( async () => {
 	// const browser = await chromium.launch();
-	const browser = await chromium.launch( { headless: false } );	// Para ver el navegador
+	const browser = await chromium.launch( { headless: false } );	// Para ver el navegador.
 
 	for ( const shop of shops ) {
-		const { name, item, url, checkPrice } = shop;
+		const { url, checkPrice } = shop;
 
 		const page = await browser.newPage();
 		await page.goto( url );
 
-		const priceRange = await checkPrice( { page } );
-
-		if ( priceRange !== '' ) {
-			console.log( `${ name } has ${ item } on sale for ${ priceRange }` );
-			console.log( `Check it out here: ${ url }` );
-		}
+		await checkPrice( { page } );
 
 		await browser.close();
 	}
