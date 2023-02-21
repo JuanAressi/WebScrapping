@@ -13,9 +13,9 @@
     "playwright": "^1.25.2",
     "standard": "^17.0.0"
   },
-  "eslintConfig": {
-    "extends": "standard"
-  },
+//   "eslintConfig": {
+//     "extends": "standard"
+//   },
   "dependencies": {
     "@playwright/test": "^1.25.2"
   }
