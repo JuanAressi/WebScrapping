@@ -9,27 +9,33 @@ async function scrapeWebsite() {
     // Puma: Hombre, ropa, pagina 1.
     await page.goto('https://ar.puma.com/hombres.html?customFilters=gender:4397;product_division:4301&page=1');
 
-    // console.log('ingreso a la pagina');
-    const price = await page.evaluate(() => {
-        // const item = document.querySelectorAll('.ProductCard');
-        const item = document.querySelectorAll('.ProductCard .ProductCard');
+    let size = 0;
 
-        // console.log('count: ' + item.length);
-        let array = [];
+    // Get all the product links, name and price.
+    const products = await page.evaluate(() => {
+        const products = document.querySelectorAll('.ProductCard');
+        const productsArray = [];
+        size = products.length;
+        
+        products.forEach((product) => {
+            if (product !== null) {
+                const productLink = product.querySelector('a').getAttribute('href');
+                const productName = product.querySelector('.product-item-link').innerText;
+                const productPrice = product.querySelector('.price').innerText;
 
-        if (item != null) {
-            item.forEach(element => {
-                const itemName = element.innerText;
-
-                // console.log('The name is: ' + itemName);
-                array.push(itemName);
-            });
-        }
-
-        return array;
+                productsArray.push({
+                    productLink,
+                    productName,
+                    productPrice
+                });
+            }
+        });
+        
+        return productsArray;
     });
 
-    console.log(price);
+    console.log(size);
+    console.log(products);
         
 
     // Aquí puedes utilizar las funciones de Puppeteer para navegar la página y extraer la información que necesitas
