@@ -5,16 +5,31 @@ const nodemailer = require('nodemailer');
 async function scrapeWebsite() {
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
-    await page.goto('https://ar.puma.com/hoody-cai-ftblculture-523370-03.html?color=1916');
+
+    // Puma: Hombre, ropa, pagina 1.
+    await page.goto('https://ar.puma.com/hombres.html?customFilters=gender:4397;product_division:4301&page=1');
 
     // console.log('ingreso a la pagina');
     const price = await page.evaluate(() => {
-        const price = document.querySelector('.ProductPrice-CurrentPrice').innerText;
+        // const item = document.querySelectorAll('.ProductCard');
+        const item = document.querySelectorAll('.ProductCard .ProductCard');
 
-        return price;
+        // console.log('count: ' + item.length);
+        let array = [];
+
+        if (item != null) {
+            item.forEach(element => {
+                const itemName = element.innerText;
+
+                // console.log('The name is: ' + itemName);
+                array.push(itemName);
+            });
+        }
+
+        return array;
     });
 
-    console.log('The price is: ' + price);
+    console.log(price);
         
 
     // Aquí puedes utilizar las funciones de Puppeteer para navegar la página y extraer la información que necesitas
