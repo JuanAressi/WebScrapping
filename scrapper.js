@@ -1,40 +1,50 @@
-const request = require('request');
-const cheerio = require('cheerio');
+const puppeteer = require('puppeteer');
 const nodemailer = require('nodemailer');
-const cron = require('node-cron');
+// const cron = require('node-cron');
 
-async function sendEmail(data) {
-  let transporter = nodemailer.createTransport({
-    host: 'smtp.example.com',
-    port: 587,
-    secure: false,
-    auth: {
-        user: 'your_email@example.com',
-        pass: 'your_password'
-    }
-  });
+async function scrapeWebsite() {
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.goto('https://ar.puma.com/hoody-cai-ftblculture-523370-03.html?color=1916');
 
-  let info = await transporter.sendMail({
-    from: '"Web Scraper" <your_email@example.com>',
-    to: 'receiver_email@example.com',
-    subject: 'Web Scraping Results',
-    text: data
-  });
+    // console.log('ingreso a la pagina');
+    const price = await page.evaluate(() => {
+        const price = document.querySelector('.ProductPrice-CurrentPrice').innerText;
 
-  console.log("Email sent: " + info.response);
+        return price;
+    });
+
+    console.log('The price is: ' + price);
+        
+
+    // Aquí puedes utilizar las funciones de Puppeteer para navegar la página y extraer la información que necesitas
+
+    await browser.close();
+
+    // Aquí puedes agregar una condición para determinar si se debe enviar un correo electrónico o no
+    const shouldSendEmail = true;
+
+    // if (shouldSendEmail) {
+    //     const transporter = nodemailer.createTransport({
+    //         service: 'gmail',
+    //         auth: {
+    //             user: 'tu_correo@gmail.com',
+    //             pass: 'tu_contraseña'
+    //         }
+    //     });
+
+    //     const mailOptions = {
+    //         from: 'tu_correo@gmail.com',
+    //         to: 'destinatario@example.com',
+    //         subject: 'Web scraping exitoso',
+    //         text: 'El web scraping se ha realizado correctamente.'
+    //     };
+
+    //     await transporter.sendMail(mailOptions);
+    // }
 }
 
-function scrape() {
-  request('https://example.com', function(error, response, html) {
-    if (!error && response.statusCode == 200) {
-      const $ = cheerio.load(html);
-      // Aquí puedes escribir el código para extraer la información de la página
-      let data = 'Data obtained from scraping: ' + ...;
-      sendEmail(data);
-    }
-  });
-}
-
-cron.schedule('*/15 * * * *', () => {
-  scrape();
-});
+// Utiliza la función de cron para programar la ejecución del web scraper cada 15 minutos
+// cron.schedule('*/15 * * * *', () => {
+    scrapeWebsite();
+// });
