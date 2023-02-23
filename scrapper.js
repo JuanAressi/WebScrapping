@@ -2,15 +2,34 @@ const { chromium } = require('playwright');
 // const nodemailer = require('nodemailer');
 // const cron = require('node-cron');
 
-async function scrapeWebsite() {
+async function scrapePuma() {
     const browser = await chromium.launch();
     const page = await browser.newPage();
-    await page.goto('https://ar.puma.com/hoody-cai-ftblculture-523370-03.html?color=1916');
 
-    // Aquí puedes utilizar las funciones de Playwright para navegar la página y extraer la información que necesitas
-    const price = await page.$eval('.ProductPrice-CurrentPrice', el => el.innerText);
+    // Puma: hombres, ropa, pagina 1.
+    await page.goto('https://ar.puma.com/hombres.html?customFilters=gender:4397;product_division:4301');
 
-    console.log(price);
+    // Obtener todos los elementos que tengan la clase .ProductCard.
+    const totalItems = await page.$$('.CategoryItemsCount-ItemsValue');
+
+    // Ejemplo: si hay un total de 260 productos, y se muestran 36 por paginas, deberíamos loopear por las 8 paginas.
+    
+    console.log('totalItems: ', totalItems.innerText());
+
+    const itemsURL   = await page.$$('.ProductCard .ProductCard-Link');
+    const itemsName  = await page.$$('.ProductCard .ProductCard-Name');
+    const itemsPrice = await page.$$('.ProductCard .ProductPrice-CurrentPrice data');
+    const count      = await itemsURL.length;
+
+    for (i = 0; i < count; i++) {
+        const itemURL = await itemsURL[i].getAttribute('href');
+        const itemName = await itemsName[i].innerText();
+        const itemPrice = await itemsPrice[i].innerText();
+
+        if (itemPrice < 2000) {
+            console.log('The item: ' + itemName + ' has a price of: ' + itemPrice + ' and the URL is: https://ar.puma.com/' + itemURL);
+        }
+    }
 
     await browser.close();
 
@@ -39,5 +58,21 @@ async function scrapeWebsite() {
 
 // Utiliza la función de cron para programar la ejecución del web scraper cada 15 minutos
 // cron.schedule('*/15 * * * *', () => {
-    scrapeWebsite();
+    scrapePuma();
 // });
+
+
+const websites = [
+    {
+        url: 'https://ar.puma.com/hombres.html?customFilters=gender:4397;product_division:4301&page=1',
+        descripción: 'Puma: hombres, ropa, pagina 1.',
+    },
+    {
+        url: 'https://ar.puma.com/hombres.html?customFilters=gender:4397;product_division:4301&page=2',
+        descripción: 'Puma: hombres, ropa, pagina 2.',
+    },
+    {
+        url: 'https://ar.puma.com/hombres.html?customFilters=gender:4397;product_division:4301&page=3',
+        descripción: 'Puma: hombres, ropa, pagina 3.',
+    },
+]
