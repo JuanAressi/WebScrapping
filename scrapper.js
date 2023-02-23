@@ -1,28 +1,21 @@
-const puppeteer = require('puppeteer');
-const nodemailer = require('nodemailer');
+const { chromium } = require('playwright');
+// const nodemailer = require('nodemailer');
 // const cron = require('node-cron');
 
 async function scrapeWebsite() {
-    const browser = await puppeteer.launch();
+    const browser = await chromium.launch();
     const page = await browser.newPage();
     await page.goto('https://ar.puma.com/hoody-cai-ftblculture-523370-03.html?color=1916');
 
-    // console.log('ingreso a la pagina');
-    const price = await page.evaluate(() => {
-        const price = document.querySelector('.ProductPrice-CurrentPrice').innerText;
+    // Aquí puedes utilizar las funciones de Playwright para navegar la página y extraer la información que necesitas
+    const price = await page.$eval('.ProductPrice-CurrentPrice', el => el.innerText);
 
-        return price;
-    });
-
-    console.log('The price is: ' + price);
-        
-
-    // Aquí puedes utilizar las funciones de Puppeteer para navegar la página y extraer la información que necesitas
+    console.log(price);
 
     await browser.close();
 
     // Aquí puedes agregar una condición para determinar si se debe enviar un correo electrónico o no
-    const shouldSendEmail = true;
+    // const shouldSendEmail = true;
 
     // if (shouldSendEmail) {
     //     const transporter = nodemailer.createTransport({

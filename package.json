@@ -9,10 +9,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "devDependencies": {
-    "playwright": "^1.25.2",
-    "standard": "^17.0.0"
-  },
   "dependencies": {
     "nodemailer": "^6.9.1",
     "puppeteer": "^19.7.2"
