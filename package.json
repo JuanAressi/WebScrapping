@@ -1,5 +1,5 @@
 {
-  "name": "WebScrapping",
+  "name": "web-scrapping",
   "version": "1.0.0",
   "description": "",
   "main": "individual.js",
@@ -13,5 +13,8 @@
     "nodemailer": "^6.9.1",
     "playwright": "^1.31.1",
     "puppeteer": "^19.7.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.36.0"
   }
 }

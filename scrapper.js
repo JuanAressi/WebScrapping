@@ -1,78 +1,167 @@
 const { chromium } = require('playwright');
-// const nodemailer = require('nodemailer');
-// const cron = require('node-cron');
+const nodemailer = require('nodemailer');
 
-async function scrapePuma() {
-    const browser = await chromium.launch();
-    const page = await browser.newPage();
+const webPagesPuma = [
+    {
+        // Hombres, ropa, precio ascendente.
+        url: 'https://ar.puma.com/hombres.html?customFilters=gender:4397;product_division:4301&sortKey=price&sortDirection=ASC',
+        max: 2000,
+    },
+    {
+        // Hombres, calzado, precio ascendente.
+        url: 'https://ar.puma.com/hombres.html?customFilters=gender:4397;product_division:4315&sortKey=price&sortDirection=ASC',
+        max: 6000,
+    },
+    {
+        // Mujeres, ropa, precio ascendente.
+        url: 'https://ar.puma.com/hombres.html?customFilters=gender:4298;product_division:4301&sortKey=price&sortDirection=ASC',
+        max: 2000,
+    },
+    {
+        // Mujeres, calzado, precio ascendente.
+        url: 'https://ar.puma.com/hombres.html?customFilters=gender:4298;product_division:4315&sortKey=price&sortDirection=ASC',
+        max: 6000,
+    },
+    {
+        // Unisex, accesorios, precio ascendente.
+        url: 'https://ar.puma.com/hombres.html?customFilters=gender:4311;product_division:4328&sortKey=price&sortDirection=ASC',
+        max: 2000,
+    },
+    {
+        // Unisex, calzado, precio ascendente.
+        url: 'https://ar.puma.com/hombres.html?customFilters=gender:4311;product_division:4315&sortKey=price&sortDirection=ASC',
+        max: 6000,
+    },
+    {
+        // Precios justos, precio ascendente.
+        url: 'https://ar.puma.com/precios-justos.html?sortKey=price&sortDirection=ASC',
+        max: 2000,
+    }
+];
 
-    // Puma: hombres, ropa, pagina 1.
-    await page.goto('https://ar.puma.com/hombres.html?customFilters=gender:4397;product_division:4301');
 
-    // Obtener todos los elementos que tengan la clase .ProductCard.
-    const totalItems = await page.$$('.CategoryItemsCount-ItemsValue');
+/**
+ * Function sendEmail - Send an email with the results of the web scraping.
+ *
+ * @param {array} products - Array of products.
+ *
+ * @return {void}
+ */
+const sendEmail = (products) => {
+    // Create html string.
+    let html = '<h1>Productos encontrados</h1>';
 
-    // Ejemplo: si hay un total de 260 productos, y se muestran 36 por paginas, deberíamos loopear por las 8 paginas.
-    
-    console.log('totalItems: ', totalItems.innerText());
-
-    const itemsURL   = await page.$$('.ProductCard .ProductCard-Link');
-    const itemsName  = await page.$$('.ProductCard .ProductCard-Name');
-    const itemsPrice = await page.$$('.ProductCard .ProductPrice-CurrentPrice data');
-    const count      = await itemsURL.length;
-
-    for (i = 0; i < count; i++) {
-        const itemURL = await itemsURL[i].getAttribute('href');
-        const itemName = await itemsName[i].innerText();
-        const itemPrice = await itemsPrice[i].innerText();
-
-        if (itemPrice < 2000) {
-            console.log('The item: ' + itemName + ' has a price of: ' + itemPrice + ' and the URL is: https://ar.puma.com/' + itemURL);
-        }
+    // Loop through each product.
+    for (const product of products) {
+        html += `
+            <div>
+                <h3>${product.name}</h3>
+                <p><strong>Precio:</strong> ${product.price}</p>
+                <a href='${product.link}'><strong>URL:</strong> ${product.link}</a>
+            </div>
+        `;
     }
 
-    await browser.close();
+    const transporter = nodemailer.createTransport({
+        host: 'smtp.hostinger.com',
+        port: 465,
+        secure: true,
+        auth: {
+            user: 'no-reply@juanaressi.com',
+            pass: '!LordSosin1'
+        }
+    });
 
-    // Aquí puedes agregar una condición para determinar si se debe enviar un correo electrónico o no
-    // const shouldSendEmail = true;
+    const mailOptions = {
+        from: 'Mystery <no-reply@juanaressi.com>',
+        to: 'Juan.Aressi@hotmail.com',
+        subject: 'Web scraping exitoso',
+        text: 'El web scraping se ha realizado correctamente.',
+        html: html,
+    };
 
-    // if (shouldSendEmail) {
-    //     const transporter = nodemailer.createTransport({
-    //         service: 'gmail',
-    //         auth: {
-    //             user: 'tu_correo@gmail.com',
-    //             pass: 'tu_contraseña'
-    //         }
-    //     });
-
-    //     const mailOptions = {
-    //         from: 'tu_correo@gmail.com',
-    //         to: 'destinatario@example.com',
-    //         subject: 'Web scraping exitoso',
-    //         text: 'El web scraping se ha realizado correctamente.'
-    //     };
-
-    //     await transporter.sendMail(mailOptions);
-    // }
+    transporter.sendMail(mailOptions);
 }
 
-// Utiliza la función de cron para programar la ejecución del web scraper cada 15 minutos
-// cron.schedule('*/15 * * * *', () => {
-    scrapePuma();
-// });
+
+/**
+ * Function scrapePuma - Scrape Puma websites.
+ *
+ * @return {void} - Sends an email with the results if they are found.
+ */
+async function scrapePuma() {
+    for (const webPage of webPagesPuma) {
+        // Create a new page.
+        let browser = await chromium.launch();
+        let page = await browser.newPage();
+
+        // Go to the web page.
+        await page.goto(webPage.url);
+        console.log('webPage.url: ', webPage.url);
+
+        try {
+            // Get all products.
+            await page.waitForSelector('.ProductCard', { timeout: 60000 });
+            let products = await page.$$('.ProductCard');
+
+            // Array to store the products.
+            let productList = [];
+            let productPrice = '';
+
+            // Loop through each product.
+            for (let product of products) {
+                try {
+                    // Get product price.
+                    await page.waitForSelector('.ProductPrice-CurrentPrice');
+                    productPrice = await product.$eval('.ProductPrice-CurrentPrice', el => el.textContent.trim());
+
+                    // If the price has a '$' character, remove it.
+                    if (productPrice.includes('$')) {
+                        productPrice = productPrice.replace('$', '');
+                    }
+
+                    // If the price is < than the max price, save it.
+                    if (productPrice < webPage.max) {
+                        // Get product name and link.
+                        let productName = await product.$eval('.ProductCard-Name', el => el.textContent.trim());
+                        let productLink = await product.$eval('.ProductCard-Link', el => el.href);
+
+                        // Make the object and save it to the array.
+                        let currentProduct = {
+                            name: productName,
+                            price: productPrice,
+                            link: productLink,
+                        };
+
+                        productList.push(currentProduct);
+                    }
+                } catch (error) {
+                    // Exit the loop.
+                    break;
+                }
+            }
+
+            // Send email to notify that the web scraping was successful.
+            if (productList.length > 0) {
+                console.log('Producto encontrado, procediendo a enviar el email');
+
+                sendEmail(productList);
+            }
+
+            // Empty the variables.
+            productList = [];
+
+            // Close the browser.
+            await browser.close();
+        } catch {
+            // Obtener el objeto actual, y agregarlo al final del array webPagesPuma, para que se vuelva a ejecutar.
+            webPagesPuma.push(webPage);
+
+            await browser.close();
+        }
+    }
+}
 
 
-const websites = [
-    {
-        url: 'https://ar.puma.com/hombres.html?customFilters=gender:4397;product_division:4301&page=1',
-        descripción: 'Puma: hombres, ropa, pagina 1.',
-    },
-    {
-        url: 'https://ar.puma.com/hombres.html?customFilters=gender:4397;product_division:4301&page=2',
-        descripción: 'Puma: hombres, ropa, pagina 2.',
-    },
-    {
-        url: 'https://ar.puma.com/hombres.html?customFilters=gender:4397;product_division:4301&page=3',
-        descripción: 'Puma: hombres, ropa, pagina 3.',
-    },
-]
+// Run the functions.
+scrapePuma();
